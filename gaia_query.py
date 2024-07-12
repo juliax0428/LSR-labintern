@@ -1,7 +1,9 @@
+import numpy as np
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astroquery.gaia import Gaia
 
+#np.loadtxt('/Users/xxz/Desktop/J_A+A_673_A114/clusters.dat', delimiter='')
 
 # string = xx:yy:zz.zzz
 def hmsToDeg(string):
@@ -41,34 +43,43 @@ def degToDMS(degrees):
     return '%02d:%02d:%s' % (d,abs(m),sStr)
 
 
+def readGaiaMainTable():
+    Gaia.MAIN_GAIA_TABLE = "gaiadr3.gaia_source"  # Reselect Data Release 3, default
 
-Gaia.MAIN_GAIA_TABLE = "gaiadr3.gaia_source"  # Reselect Data Release 3, default
+    Gaia.ROW_LIMIT = 3  # Ensure the default row limit.
+    coord = SkyCoord(ra=hmsToDeg('13:15:18.74'), dec=dmsToDeg('-65:55:01.2'), unit=(u.degree, u.degree), frame='icrs')
+    j = Gaia.cone_search_async(coord, radius=u.Quantity(1.0, u.deg))
+    r = j.get_results()
+    r.pprint(max_lines=3, max_width=530)
 
-Gaia.ROW_LIMIT = 3  # Ensure the default row limit.
-coord = SkyCoord(ra=hmsToDeg('13:15:18.74'), dec=dmsToDeg('-65:55:01.2'), unit=(u.degree, u.degree), frame='icrs')
-j = Gaia.cone_search_async(coord, radius=u.Quantity(1.0, u.deg))
-r = j.get_results()
-r.pprint(max_lines=3, max_width=530)
+    gaiadr3_table = Gaia.load_table('gaiadr3.gaia_source')
+    for column in gaiadr3_table.columns:
+        print(column.name)
+    return gaiadr3_table
 
-gaiadr3_table = Gaia.load_table('gaiadr3.gaia_source')
-for column in gaiadr3_table.columns:
-    print(column.name)
-
-tables = Gaia.load_tables(only_names=True)
-for table in tables:
-    print(table.get_qualified_name())
+def showGaiaTables():
+    tables = Gaia.load_tables(only_names=True)
+    for table in tables:
+        print(table.get_qualified_name())
 
 
+def readGaia_astrophysical_parameters():
+    """ THIS ONE """
+    table = Gaia.load_table('gaiadr3.astrophysical_parameters')
+#    for column in table.columns:
+#        print(column.name)
+    return table
 
-""" THIS ONE """
-table = Gaia.load_table('gaiadr3.astrophysical_parameters')
-print(table)
-for column in table.columns:
-    print(column.name)
-    if 'spectraltype' in column.name:
-        STOP
+def readCDSTable(tableName,ReadMeName):
+    from astropy.io import ascii
+    table = ascii.read(tableName,
+            readme=ReadMeName)
+    return table
 
-""" NOT THIS ONE """
-table = Gaia.load_table('gaiadr3.astrophysical_parameters_supp')
-for column in table.columns:
-    print(column.name)
+tableName = '/Users/xxz/Desktop/J_A+A_673_A114/clusters.dat'
+ReadMeName = '/Users/xxz/Desktop/J_A+A_673_A114/ReadMe'
+
+clusters = readCDSTable(tableName=tableName,ReadMeName=ReadMeName)
+print('clusters = ',clusters)
+print('dir(clusters) = ',dir(clusters))
+
