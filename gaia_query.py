@@ -1,9 +1,16 @@
-import numpy as np
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astroquery.gaia import Gaia
+from astropy.io import ascii
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from astropy.table import Table
 
-#np.loadtxt('/Users/xxz/Desktop/J_A+A_673_A114/clusters.dat', delimiter='')
+def calculate_absolute_magnitude(df):
+    df['distance_pc'] = 1 / df['parallax']  # Convert parallax from mas to parsecs
+    df['absolute_mag_g'] = df['phot_g_mean_mag'] - 5 * np.log10(df['distance_pc']) + 5
+    return df
 
 # string = xx:yy:zz.zzz
 def hmsToDeg(string):
@@ -12,7 +19,6 @@ def hmsToDeg(string):
         return (15. * s / 3600.) + (15. * m / 60.) + (h * 15.)
     except:
         print('hmsToDeg: string = <'+string+'>')
-        STOP
 
 def degToHMS(degrees):
     h = int(degrees / 15.)
@@ -42,44 +48,194 @@ def degToDMS(degrees):
     sStr = sStr.zfill(6)
     return '%02d:%02d:%s' % (d,abs(m),sStr)
 
-
-def readGaiaMainTable():
+# radius in degrees
+def readGaiaMainTable(ra_deg, dec_deg, radius, row_limit=10000000):
     Gaia.MAIN_GAIA_TABLE = "gaiadr3.gaia_source"  # Reselect Data Release 3, default
-
-    Gaia.ROW_LIMIT = 3  # Ensure the default row limit.
-    coord = SkyCoord(ra=hmsToDeg('13:15:18.74'), dec=dmsToDeg('-65:55:01.2'), unit=(u.degree, u.degree), frame='icrs')
-    j = Gaia.cone_search_async(coord, radius=u.Quantity(1.0, u.deg))
+    Gaia.ROW_LIMIT = row_limit  # Ensure the default row limit.
+    coord = SkyCoord(ra=ra_deg, dec=dec_deg, unit=(u.degree, u.degree), frame='icrs')
+    j = Gaia.cone_search_async(coord, radius=u.Quantity(radius, u.deg))
     r = j.get_results()
-    r.pprint(max_lines=3, max_width=530)
-
-    gaiadr3_table = Gaia.load_table('gaiadr3.gaia_source')
-    for column in gaiadr3_table.columns:
-        print(column.name)
-    return gaiadr3_table
+    return r
 
 def showGaiaTables():
     tables = Gaia.load_tables(only_names=True)
     for table in tables:
         print(table.get_qualified_name())
 
-
 def readGaia_astrophysical_parameters():
     """ THIS ONE """
     table = Gaia.load_table('gaiadr3.astrophysical_parameters')
-#    for column in table.columns:
-#        print(column.name)
     return table
 
 def readCDSTable(tableName,ReadMeName):
-    from astropy.io import ascii
     table = ascii.read(tableName,
             readme=ReadMeName)
     return table
 
-tableName = '/Users/xxz/Desktop/J_A+A_673_A114/clusters.dat'
-ReadMeName = '/Users/xxz/Desktop/J_A+A_673_A114/ReadMe'
+def table_to_dataframe(table):
+    return table.to_pandas()
 
-clusters = readCDSTable(tableName=tableName,ReadMeName=ReadMeName)
-print('clusters = ',clusters)
-print('dir(clusters) = ',dir(clusters))
+def createHSCTable(clusters, members):
+    """ ALSO CHECK gaiadr3.astrophysical_parameters """
+    query = "SELECT * FROM gaiadr3.gaia_source WHERE source_id=%d;"
+    query_astro_param = "SELECT * FROM gaiadr3.astrophysical_parameters WHERE source_id=%d;"
+
+    cluster_data_hsc = []
+    cluster_data_lynga = []
+    for cluster in clusters:
+        if cluster['Name'] =='HSC_2686':
+            print('found cluster. name = ',cluster['Name'])
+            cluster_data_hsc.append(cluster)
+        elif cluster['Name'] =='Lynga_3':
+            print('found cluster. name = ',cluster['Name'])
+            cluster_data_lynga.append(cluster)
+
+    nStars = 0
+    nStarsWithParams = 0
+    member_data_hsc =[]
+    member_data_lynga =[]
+    gaia_data_hsc = []
+    astro_param_data_hsc = []
+    gaia_data_lynga = []
+    astro_param_data_lynga = []
+    for member in members:
+        if member['Name'] == 'HSC_2686':
+            nStars += 1
+            print('found ',nStars,' in star belonging to cluster HSC_2686')
+            member_data_hsc.append(member)
+            job=Gaia.launch_job_async(query % (member['GaiaDR3']))
+            gaia_data_hsc.append(job.get_results())
+            #print('Gaia_data_hsc from the table= ',gaia_data_hsc)
+            job=Gaia.launch_job_async(query_astro_param % (member['GaiaDR3']))
+            result = job.get_results()
+            if len(result) > 0:
+                print('job.get_results() = ',result)
+                nStarsWithParams += 1
+                astro_param_data_hsc.append(result)
+        elif member['Name'] == 'Lynga_3':
+            nStars += 1
+            print('found ',nStars,' in star belonging to cluster Lynga_3')
+            member_data_lynga.append(member)
+            job=Gaia.launch_job_async(query % (member['GaiaDR3']))
+            gaia_data_lynga.append(job.get_results())
+            #print('gaia_data_lynga from the table = ',gaia_data_lynga)
+            job=Gaia.launch_job_async(query_astro_param % (member['GaiaDR3']))
+            result = job.get_results()
+            if len(result) > 0:
+                nStarsWithParams += 1
+                astro_param_data_lynga.append(result)
+    print('Column names of hsc_data in gaia data table:', gaia_data_hsc[0].colnames)
+    print('Column names of lynga_data in gaia data table:', gaia_data_lynga[0].colnames)
+    print('nStarsWithParams = ',nStarsWithParams)
+
+    print('cluster_data_hsc = ',cluster_data_hsc)
+    table_cluster_data_hsc = Table(rows=cluster_data_hsc)
+    print('table_cluster_data_hsc = ',table_cluster_data_hsc)
+    print('member_data_hsc = ',member_data_hsc)
+    table_member_data_hsc = Table(rows=member_data_hsc)
+    print('table_member_data_hsc = ',table_member_data_hsc)
+    print('gaia_data_hsc = ', gaia_data_hsc)
+    table_gaia_data_hsc = Table(rows=gaia_data_hsc)
+    print('table_gaia_data_hsc = ', gaia_data_hsc)
+
+    print('cluster_data_lynga = ',cluster_data_lynga)
+    table_cluster_data_lynga = Table(rows=cluster_data_lynga)
+    print('table_cluster_data_lynga = ',table_cluster_data_lynga)
+    print('member_data_lynga = ',member_data_lynga)
+    table_member_data_lynga = Table(rows=member_data_lynga)
+    print('table_member_data_lynga = ',table_member_data_lynga)
+    print('gaia_data_lynga = ', gaia_data_lynga)
+    table_gaia_data_lynga = Table(rows=gaia_data_lynga)
+    print('table_gaia_data_lynga = ', gaia_data_lynga)
+
+    print('astro_param_data_hsc = ', astro_param_data_hsc)
+    table_astro_param_data_hsc = Table(rows=astro_param_data_hsc)
+    print('table_astro_param_data_hsc = ', table_astro_param_data_hsc)
+    print('astro_param_data_lynga = ', astro_param_data_lynga)
+    table_astro_param_data_lynga = Table(rows=astro_param_data_lynga)
+    print('table_astro_param_data_lynga = ', table_astro_param_data_lynga)
+
+    return (table_cluster_data_hsc, table_member_data_hsc, table_gaia_data_hsc, 
+            table_cluster_data_lynga, table_member_data_lynga, table_gaia_data_lynga, 
+            table_astro_param_data_hsc, table_astro_param_data_lynga)
+
+if __name__ == '__main__':
+
+    all_GAIA_stars_in_area = readGaiaMainTable(229.2,-58.375,.25)
+    tableName_all_GAIA_stars_in_area = '/Users/xxz/Desktop/all_GAIA_stars_in_area.csv'
+    all_GAIA_stars_in_area.write(tableName_all_GAIA_stars_in_area,format='pandas.csv')
+    STOP
+    tableName = '/Users/xxz/Desktop/J_A+A_673_A114/clusters.dat'
+    ReadMeName = '/Users/xxz/Desktop/J_A+A_673_A114/ReadMe'
+    memberName = '/Users/xxz/Desktop/J_A+A_673_A114/members.dat'
+    clusters = readCDSTable(tableName=tableName,ReadMeName=ReadMeName)
+    members = readCDSTable(tableName=memberName,ReadMeName=ReadMeName)
+    cluster_data_hsc, member_data_hsc, gaia_data_hsc, cluster_data_lynga, member_data_lynga, gaia_data_lynga, astro_params_hsc, astro_params_lynga = createHSCTable(clusters, members)
+
+    member_dfs_hsc = [table_to_dataframe(t) for t in member_data_hsc]
+    gaia_dfs_hsc = [table_to_dataframe(t) for t in gaia_data_hsc]
+    member_dfs_lynga = [table_to_dataframe(t) for t in member_data_lynga]
+    gaia_dfs_lynga = [table_to_dataframe(t) for t in gaia_data_lynga]
+    astro_params_dfs_hsc = [table_to_dataframe(t) for t in astro_params_hsc]
+    astro_params_dfs_lynga = [table_to_dataframe(t) for t in astro_params_lynga]
+
+    member_df_hsc = pd.concat(member_dfs_hsc, ignore_index=True)
+    gaia_df_hsc = pd.concat(gaia_dfs_hsc, ignore_index=True)
+    member_df_lynga = pd.concat(member_dfs_lynga, ignore_index=True)
+    gaia_df_lynga = pd.concat(gaia_dfs_lynga, ignore_index=True)
+    astro_params_df_hsc = pd.concat(astro_params_dfs_hsc, ignore_index=True)
+    astro_params_df_lynga = pd.concat(astro_params_dfs_lynga, ignore_index=True)
+
+    merged_df_hsc = pd.merge(member_df_hsc, gaia_df_hsc, on='source_id', how='left', suffixes=('_member', '_gaia'))
+    merged_df_lynga = pd.merge(member_df_lynga, gaia_df_lynga, on='source_id', how='left', suffixes=('_member', '_gaia'))
+    merged_df_astro_params = pd.merge(astro_params_df_hsc, astro_params_df_lynga, on='source_id', how='left', suffixes=('_member', '_gaia'))
+
+    print('Merged DataFrame of HSC:', merged_df_hsc)
+    print('Merged DataFrame of Lynga:', merged_df_lynga)
+    print('Merged DataFrame of astrophysical parameters:', merged_df_astro_params)
+
+    common_columns = set(member_df_hsc.columns).intersection(gaia_df_hsc.columns) - {'source_id'}
+    for col in common_columns:
+        diff_col_name = f'{col}_diff'
+        merged_df_hsc[diff_col_name] = merged_df_hsc[f'{col}_gaia'] - merged_df_hsc[f'{col}_member']
+    print("\nDifferences in Parameters:")
+    for col in common_columns:
+        diff_col_name = f'{col}_diff'
+        print(f"\nDifferences in {col}:")
+        print(merged_df_hsc[['source_id', diff_col_name]])
+
+    print('clusters = ',clusters)
+    print('dir(clusters) = ',dir(clusters))
+    print('members = ',members)
+    print('dir(members) = ',dir(members))
+    print('Column names in clusters table:', clusters.colnames)
+    print('Column names in members table: ',members.colnames)
+
+
+    """
+    Hertzsprung-Russel Diagram (absolute magnitude : Temperature)
+    """
+
+    gaia_df_hsc = calculate_absolute_magnitude(gaia_df_hsc)
+    gaia_df_lynga = calculate_absolute_magnitude(gaia_df_lynga)
+
+    temp_hsc = astro_params_df_hsc['teff_gspphot']
+    mag_hsc = gaia_df_hsc['absolute_mag_g']
+    temp_lynga = astro_params_df_lynga['teff_gspphot']
+    mag_lynga = gaia_df_lynga['absolute_mag_g']
+
+    # Plot the HR Diagram
+    plt.figure(figsize=(10, 8))
+    plt.scatter(temp_hsc, mag_hsc, color='blue', label='HSC_2686')
+    plt.scatter(temp_lynga, mag_lynga, color='red', label='Lynga_3')
+    plt.gca().invert_yaxis()
+
+    plt.xlabel('Effective Temperature (K)')
+    plt.ylabel('Absolute Magnitude (G)')
+    plt.title('Hertzsprung-Russell Diagram')
+    plt.legend()
+    plt.show()
+
+
+
 
