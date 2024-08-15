@@ -11,16 +11,15 @@ from matplotlib.patches import Circle
 from gaia_query import readCDSTable
 from gaia_query import hmsToDeg
 from gaia_query import dmsToDeg
-from PyAstronomy import pyasl
-
+from PyAstronomy import pyas
 # Read the data
-hsc2686 = pd.read_csv('/Users/xxz/LSR-labintern/HSC_2686.csv')
-lynga3 = pd.read_csv('/Users/xxz/LSR-labintern/Lynga3.csv')
-all_gaia_stars = pd.read_csv('/Users/xxz/Desktop/all_GAIA_stars_in_area.csv')
+hsc2686 = pd.read_csv('/Users/xxz/Desktop/LSR-labintern/HSC_2686.csv')
+lynga3 = pd.read_csv('/Users/xxz/Desktop/LSR-labintern/Lynga3.csv')
+all_gaia_stars = pd.read_csv('/Users/xxz/Desktop/LSR-labintern/all_GAIA_stars_in_area.csv')
 
-tableName = '/Users/xxz/Desktop/J_A+A_673_A114/clusters.dat'
-memberName = '/Users/xxz/Desktop/J_A+A_673_A114/members.dat'
-ReadMeName = '/Users/xxz/Desktop/J_A+A_673_A114/ReadMe'
+tableName = '/Users/xxz/Desktop/LSR-labintern/J_A+A_673_A114/clusters.dat'
+memberName = '/Users/xxz/Desktop/LSR-labintern/J_A+A_673_A114/members.dat'
+ReadMeName = '/Users/xxz/Desktop/LSR-labintern/J_A+A_673_A114/ReadMe'
 clusters = readCDSTable(tableName=tableName,ReadMeName=ReadMeName)
 members = readCDSTable(tableName=memberName,ReadMeName=ReadMeName)
 
@@ -162,7 +161,7 @@ def GaiaDR3_PM_uncertainties():
                 xerr=np.abs(lynga3['pmra_error']/lynga3['pmra']), 
                 yerr=np.abs(lynga3['pmdec_error']/lynga3['pmdec']), 
                 fmt='o', color='red', capsize=3)
-    ax.plot(central_star['pmra'], central_star['pmdec'], marker='D', markersize='5',color='green', label='Central Star')
+    ax.plot(central_star['pmra'], central_star['pmdec'], marker='D', markersize='8',color='green', label='Central Star')
 
     ax.set_xlabel('Proper motion in RA (mas/yr)')
     ax.set_ylabel('Proper Motion in DEC (mas/yr)')
@@ -170,7 +169,24 @@ def GaiaDR3_PM_uncertainties():
     ax.legend()
     plt.show()
 
-GaiaDR3_map()
-GaiaDR3_CMD()
-GaiaDR3_PM()
-GaiaDR3_PM_uncertainties()
+#Parallax vs Radial Velocity
+def GaiaDR3_Plx():
+    fig, ax = plt.subplots()
+
+    ax.scatter(all_gaia_stars['radial_velocity'], all_gaia_stars['parallax'], color='grey', 
+               label='All stars in DR3', s=0.1)
+    ax.scatter(hsc2686['radial_velocity'], hsc2686['parallax'], color='blue', label='HSC_2686', s=3)
+    ax.scatter(lynga3['radial_velocity'], lynga3['parallax'], color='red', label='Lynga_3', s=3)
+    ax.plot(central_star['radial_velocity'], central_star['parallax'], marker='D', markersize='3', color='green', label='Central Star')
+
+    ax.set_xlabel('Radial Velocity')
+    ax.set_ylabel('Parallax')
+    ax.set_title('Gaia DR3 Parallax against Radial Velocity')
+    ax.legend()
+    plt.show()
+
+#GaiaDR3_map()
+#GaiaDR3_CMD()
+#GaiaDR3_PM()
+#GaiaDR3_PM_uncertainties()
+GaiaDR3_Plx()
