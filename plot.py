@@ -1,7 +1,6 @@
 '''
 An attempt to plot similar plots as Fig.4 in 
-Testing Cluster Membership of Planetary Nebulae with High-Precision Proper Motions. I. 
-HST Observations of JaFu 1 Near the Globular Cluster Palomar 6
+Testing Cluster Membership of Planetary Nebulae with High-Precision Proper Motions. I. HST Observations of JaFu 1 Near the Globular Cluster Palomar 6
 '''
 
 import numpy as np
@@ -11,45 +10,59 @@ from matplotlib.patches import Circle
 from gaia_query import readCDSTable
 from gaia_query import hmsToDeg
 from gaia_query import dmsToDeg
-from PyAstronomy import pyas
+from PyAstronomy import pyasl
+
+
 # Read the data
 hsc2686 = pd.read_csv('/Users/xxz/Desktop/LSR-labintern/HSC_2686.csv')
 lynga3 = pd.read_csv('/Users/xxz/Desktop/LSR-labintern/Lynga3.csv')
-all_gaia_stars = pd.read_csv('/Users/xxz/Desktop/LSR-labintern/all_GAIA_stars_in_area.csv')
+pleiades = pd.read_csv('/Users/xxz/Desktop/LSR-labintern/Pleiades.csv', sep=';', skiprows=2)
+gaia_stars = pd.read_csv('/Users/xxz/Desktop/LSR-labintern/all_GAIA_stars_in_area.csv')
+czernik = pd.read_csv('/Users/xxz/Desktop/LSR-labintern/czernik_converted.csv', sep=';')
 
-tableName = '/Users/xxz/Desktop/LSR-labintern/J_A+A_673_A114/clusters.dat'
-memberName = '/Users/xxz/Desktop/LSR-labintern/J_A+A_673_A114/members.dat'
-ReadMeName = '/Users/xxz/Desktop/LSR-labintern/J_A+A_673_A114/ReadMe'
-clusters = readCDSTable(tableName=tableName,ReadMeName=ReadMeName)
-members = readCDSTable(tableName=memberName,ReadMeName=ReadMeName)
+print('czernik', czernik)
+print('czernik.keys', czernik.keys())
+print('czernik datatype', czernik.dtypes)
+
+
+#print('pleiades data is : \n',pleiades)
+#print('pleiades.keys() \n', pleiades.keys())
+#print('type of pleiades', pleiades.dtypes)
+#print("pleiades['BP_RP']", pleiades['BP-RP'], 'datatype', pleiades['BP-RP'].dtype)
+#print(pleiades['BP-RP'].astype(float))
 
 #Position of PN ([PN RA/DEC]: 15:16:41.00 -58:22:26.00)
 pos_PN_hms = ('15:16:41.00')
 pos_PN_dms = ('-58:22:26.00')
 pos_PN_ra_deg = hmsToDeg(pos_PN_hms)
 pos_PN_dec_deg = dmsToDeg(pos_PN_dms)
-print ('Central Star of PN_ra_deg =', pos_PN_ra_deg, 'Central Star of PN_dec_deg', pos_PN_dec_deg)
+print ('Position of PN PN_ra_deg =', pos_PN_ra_deg, 'Position of PN PN_dec_deg', pos_PN_dec_deg)
 
 #Find the Central Star
-
 minDist = 1000.
 central_star = None
 for idx,pn in hsc2686.iterrows():
-    print('pn = ',pn)
-    print('pn[ra] = ',type(pn['ra']),': ',pn['ra'])
+    #print('pn = ',pn)
+    #print('pn[ra] = ',type(pn['ra']),': ',pn['ra'])
     dist = pyasl.getAngDist(pos_PN_ra_deg, pos_PN_dec_deg, pn['ra'], pn['dec'])
     if dist < minDist:
         minDist = dist
         central_star = pn
     if dist < 1/3600.:
-        print ('Source ID of central star is', pn['SOURCE_ID'])
-print('minDist = ',minDist)
-print('Central star = ',central_star)       #Central Star SOURCE_ID: 5877088151005347072
-
+        #print ('Source ID of central star is', pn['SOURCE_ID'])
+        central_star_id = pn['SOURCE_ID']
+print('minDist from PN 15:16:41.00 -58:22:26.00 = ',minDist, '\n Central star = ',central_star) 
+#Central Star SOURCE_ID: 5877088151005347072
 
 # Panel (a): 
 # Positions diagram of our cluster stars.
 def GaiaDR3_map():
+    tableName = '/Users/xxz/Desktop/LSR-labintern/J_A+A_673_A114/clusters.dat'
+    memberName = '/Users/xxz/Desktop/LSR-labintern/J_A+A_673_A114/members.dat'
+    ReadMeName = '/Users/xxz/Desktop/LSR-labintern/J_A+A_673_A114/ReadMe'
+    clusters = readCDSTable(tableName=tableName,ReadMeName=ReadMeName)
+    members = readCDSTable(tableName=memberName,ReadMeName=ReadMeName)
+
     cluster_data_hsc = []
     cluster_data_lynga = []
     for cluster in clusters:
@@ -65,7 +78,7 @@ def GaiaDR3_map():
                                color='red', fill=False, linestyle='dashed')
 
     fig, ax = plt.subplots()
-    ax.scatter(all_gaia_stars['ra'],  all_gaia_stars['dec'], color='grey', label='all stars', s=0.1)
+    ax.scatter(gaia_stars['ra'],  gaia_stars['dec'], color='grey', label='all stars', s=0.1)
     ax.scatter(hsc2686['ra'], hsc2686['dec'], color='blue', label='HSC_2686', s=4)
     ax.scatter(lynga3['ra'], lynga3['dec'], color='red', label='Lynga_3', s=4)
     ax.add_patch(circle_hsc2686)
@@ -97,10 +110,11 @@ def GaiaDR3_CMD():
     lynga3_G_mag = lynga3 ['phot_g_mean_mag']
 
     fig, ax = plt.subplots()
-    ax.scatter(all_gaia_stars['bp_rp'], all_gaia_stars['phot_g_mean_mag'], 
+    ax.scatter(gaia_stars['bp_rp'], gaia_stars['phot_g_mean_mag'], 
                color='grey', label='All stars in DR3', s=0.1)
     ax.scatter(hsc2686_G_BP_RP, hsc2686_G_mag, color='blue', label='HSC_2686', s=4)
     ax.scatter(lynga3_G_BP_RP, lynga3_G_mag, color='red', label='Lynga_3', s=4)
+    ax.scatter(pleiades['BP-RP'].astype(float), pleiades['Gmag'].astype(float), color='purple', label='pleiades', s=4)
     ax.plot(central_star['bp_rp'], central_star['phot_g_mean_mag'], marker='D', markersize='3', color='green', label='Central Star')
 
     ax.set_xlabel('G_BP - G_RP')
@@ -116,10 +130,11 @@ def GaiaDR3_PM():
     '''Proper Motion Diagram'''
 
     fig, ax = plt.subplots()
-    ax.scatter(all_gaia_stars['pmra'], all_gaia_stars['pmdec'], color='grey', 
+    ax.scatter(gaia_stars['pmra'], gaia_stars['pmdec'], color='grey', 
                label='All stars in DR3', s=0.1)
     ax.scatter(hsc2686['pmra'], hsc2686['pmdec'], color='blue', label='HSC_2686', s=3)
     ax.scatter(lynga3['pmra'], lynga3['pmdec'], color='red', label='Lynga_3', s=3)
+    ax.scatter(pleiades['pmRA'], pleiades['pmDE'], color='purple', label='pleiades', s=3)
     ax.plot(np.mean(hsc2686['pmra']), np.mean(hsc2686['pmdec']), '*', 
             color='orange', label='Mean Proper Motion of hsc2686')
     ax.plot(np.mean(lynga3['pmra']), np.mean(lynga3['pmdec']), '*',
@@ -139,13 +154,13 @@ def GaiaDR3_PM_uncertainties():
 
     filter_hsc2686 = (hsc2686['pmra_error'] < 2) & (hsc2686['pmdec_error'] < 2)
     filter_lynga3 = (lynga3['pmra_error'] < 2) & (lynga3['pmdec_error'] < 2)
-    filter_all_gaia = (all_gaia_stars['pmra_error'] < 2) & (all_gaia_stars['pmdec_error'] < 2)
+    filter_all_gaia = (gaia_stars['pmra_error'] < 2) & (gaia_stars['pmdec_error'] < 2)
 
     ax.scatter(hsc2686[filter_hsc2686]['pmra'], hsc2686[filter_hsc2686]['pmdec'], 
                color='blue', label='HSC_2686', s=3)
     ax.scatter(lynga3[filter_lynga3]['pmra'], lynga3[filter_lynga3]['pmdec'], 
                color='red', label='Lynga_3', s=3)
-    ax.scatter(all_gaia_stars[filter_all_gaia]['pmra'], all_gaia_stars[filter_all_gaia]['pmdec'], 
+    ax.scatter(gaia_stars[filter_all_gaia]['pmra'], gaia_stars[filter_all_gaia]['pmdec'], 
                color='grey', label='All stars in DR3', s=0.2)
 
     ax.plot(np.mean(hsc2686['pmra']), np.mean(hsc2686['pmdec']), 
@@ -173,10 +188,11 @@ def GaiaDR3_PM_uncertainties():
 def GaiaDR3_Plx():
     fig, ax = plt.subplots()
 
-    ax.scatter(all_gaia_stars['radial_velocity'], all_gaia_stars['parallax'], color='grey', 
+    ax.scatter(gaia_stars['radial_velocity'], gaia_stars['parallax'], color='grey', 
                label='All stars in DR3', s=0.1)
     ax.scatter(hsc2686['radial_velocity'], hsc2686['parallax'], color='blue', label='HSC_2686', s=3)
     ax.scatter(lynga3['radial_velocity'], lynga3['parallax'], color='red', label='Lynga_3', s=3)
+    ax.scatter(pleiades['RV'], pleiades['Plx'], color='purple', label='pleiades', s=3)
     ax.plot(central_star['radial_velocity'], central_star['parallax'], marker='D', markersize='3', color='green', label='Central Star')
 
     ax.set_xlabel('Radial Velocity')
@@ -185,8 +201,10 @@ def GaiaDR3_Plx():
     ax.legend()
     plt.show()
 
+
+
 #GaiaDR3_map()
-#GaiaDR3_CMD()
+GaiaDR3_CMD()
 #GaiaDR3_PM()
 #GaiaDR3_PM_uncertainties()
-GaiaDR3_Plx()
+#GaiaDR3_Plx()

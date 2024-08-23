@@ -82,6 +82,7 @@ def createHSCTable(clusters, members):
 
     cluster_data_hsc = []
     cluster_data_lynga = []
+    cluster_data_czernik=[]
     for cluster in clusters:
         if cluster['Name'] =='HSC_2686':
             print('found cluster. name = ',cluster['Name'])
@@ -89,7 +90,10 @@ def createHSCTable(clusters, members):
         elif cluster['Name'] =='Lynga_3':
             print('found cluster. name = ',cluster['Name'])
             cluster_data_lynga.append(cluster)
-
+        elif cluster['Name'] =='Czernik_20':
+            print('found cluster. name = ',cluster['Name'])
+            cluster_data_czernik.append(cluster)
+    
     nStars = 0
     nStarsWithParams = 0
     member_data_hsc =[]
@@ -161,13 +165,9 @@ def createHSCTable(clusters, members):
 
 if __name__ == '__main__':
 
-    all_GAIA_stars_in_area = readGaiaMainTable(229.2,-58.375,.25)
-    tableName_all_GAIA_stars_in_area = '/Users/xxz/Desktop/all_GAIA_stars_in_area.csv'
-    all_GAIA_stars_in_area.write(tableName_all_GAIA_stars_in_area,format='pandas.csv')
-    STOP
-    tableName = '/Users/xxz/Desktop/J_A+A_673_A114/clusters.dat'
-    ReadMeName = '/Users/xxz/Desktop/J_A+A_673_A114/ReadMe'
-    memberName = '/Users/xxz/Desktop/J_A+A_673_A114/members.dat'
+    tableName = '/Users/xxz/Desktop/LSR-labintern/J_A+A_673_A114/clusters.dat'
+    ReadMeName = '/Users/xxz/Desktop/LSR-labintern/J_A+A_673_A114/ReadMe'
+    memberName = '/Users/xxz/Desktop/LSR-labintern/J_A+A_673_A114/members.dat'
     clusters = readCDSTable(tableName=tableName,ReadMeName=ReadMeName)
     members = readCDSTable(tableName=memberName,ReadMeName=ReadMeName)
     cluster_data_hsc, member_data_hsc, gaia_data_hsc, cluster_data_lynga, member_data_lynga, gaia_data_lynga, astro_params_hsc, astro_params_lynga = createHSCTable(clusters, members)
