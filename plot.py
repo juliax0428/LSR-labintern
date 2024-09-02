@@ -18,18 +18,18 @@ hsc2686 = pd.read_csv('/Users/xxz/Desktop/LSR-labintern/HSC_2686.csv')
 lynga3 = pd.read_csv('/Users/xxz/Desktop/LSR-labintern/Lynga3.csv')
 pleiades = pd.read_csv('/Users/xxz/Desktop/LSR-labintern/Pleiades.csv', sep=';', skiprows=2)
 gaia_stars = pd.read_csv('/Users/xxz/Desktop/LSR-labintern/all_GAIA_stars_in_area.csv')
-czernik = pd.read_csv('/Users/xxz/Desktop/LSR-labintern/czernik_converted.csv', sep=';')
+czernik = pd.read_csv('/Users/xxz/Desktop/LSR-labintern/czernik20_cleaned.csv', sep=',')
 
-print('czernik', czernik)
-print('czernik.keys', czernik.keys())
-print('czernik datatype', czernik.dtypes)
+#print('czernik', czernik)
+#print('czernik.keys', czernik.columns)
+#print('czernik datatype', czernik.dtypes)
 
 
 #print('pleiades data is : \n',pleiades)
 #print('pleiades.keys() \n', pleiades.keys())
 #print('type of pleiades', pleiades.dtypes)
-#print("pleiades['BP_RP']", pleiades['BP-RP'], 'datatype', pleiades['BP-RP'].dtype)
-#print(pleiades['BP-RP'].astype(float))
+#print("czernik['Gmag']", czernik['Gmag'], 'datatype', czernik['Gmag'].dtype)
+#print(czernik['BP-RP'].astype(float))
 
 #Position of PN ([PN RA/DEC]: 15:16:41.00 -58:22:26.00)
 pos_PN_hms = ('15:16:41.00')
@@ -53,6 +53,11 @@ for idx,pn in hsc2686.iterrows():
         central_star_id = pn['SOURCE_ID']
 print('minDist from PN 15:16:41.00 -58:22:26.00 = ',minDist, '\n Central star = ',central_star) 
 #Central Star SOURCE_ID: 5877088151005347072
+
+def apparant_Gmag(Gmag, d):
+    return 5*np.log(d) - 5 + Gmag
+def distance(plx):
+    return plx*(10**3)
 
 # Panel (a): 
 # Positions diagram of our cluster stars.
@@ -103,19 +108,14 @@ def GaiaDR3_map():
 # Color-magnitude diagram of all the stars. G magnitude versus GBP − GRP color.
 def GaiaDR3_CMD():
     '''Color Magnitude diagram'''
-
-    hsc2686_G_BP_RP = hsc2686['bp_rp']
-    lynga3_G_BP_RP = lynga3['bp_rp']
-    hsc2686_G_mag = hsc2686 ['phot_g_mean_mag']
-    lynga3_G_mag = lynga3 ['phot_g_mean_mag']
-
     fig, ax = plt.subplots()
-    ax.scatter(gaia_stars['bp_rp'], gaia_stars['phot_g_mean_mag'], 
+    ax.scatter(gaia_stars['bp_rp'], apparant_Gmag(gaia_stars['phot_g_mean_mag'],distance(gaia_stars['parallax'])), 
                color='grey', label='All stars in DR3', s=0.1)
-    ax.scatter(hsc2686_G_BP_RP, hsc2686_G_mag, color='blue', label='HSC_2686', s=4)
-    ax.scatter(lynga3_G_BP_RP, lynga3_G_mag, color='red', label='Lynga_3', s=4)
-    ax.scatter(pleiades['BP-RP'].astype(float), pleiades['Gmag'].astype(float), color='purple', label='pleiades', s=4)
-    ax.plot(central_star['bp_rp'], central_star['phot_g_mean_mag'], marker='D', markersize='3', color='green', label='Central Star')
+    ax.scatter(hsc2686['bp_rp'], apparant_Gmag(hsc2686['phot_g_mean_mag'],distance(hsc2686['parallax'])), color='blue', label='HSC_2686', s=4)
+    ax.scatter(lynga3['bp_rp'], apparant_Gmag(lynga3['phot_g_mean_mag'], distance(lynga3['parallax'])), color='red', label='Lynga_3', s=4)
+    ax.scatter(czernik['BP-RP'], apparant_Gmag(czernik['Gmag'], distance(czernik['Plx'])), label='czernik20', s=3)
+    #ax.scatter(pleiades['BP-RP'].astype(float), pleiades['Gmag'].astype(float), color='purple', label='pleiades', s=4)
+    ax.plot(central_star['bp_rp'], apparant_Gmag(central_star['phot_g_mean_mag'],distance(central_star['parallax'])), marker='D', markersize='3', color='green', label='Central Star')
 
     ax.set_xlabel('G_BP - G_RP')
     ax.set_ylabel('G Magnitude')
@@ -128,13 +128,13 @@ def GaiaDR3_CMD():
 # Vector-point diagram
 def GaiaDR3_PM():
     '''Proper Motion Diagram'''
-
     fig, ax = plt.subplots()
     ax.scatter(gaia_stars['pmra'], gaia_stars['pmdec'], color='grey', 
                label='All stars in DR3', s=0.1)
     ax.scatter(hsc2686['pmra'], hsc2686['pmdec'], color='blue', label='HSC_2686', s=3)
     ax.scatter(lynga3['pmra'], lynga3['pmdec'], color='red', label='Lynga_3', s=3)
-    ax.scatter(pleiades['pmRA'], pleiades['pmDE'], color='purple', label='pleiades', s=3)
+    #ax.scatter(pleiades['pmRA'].astype(float), pleiades['pmDE'].astype(float), color='purple', label='pleiades', s=3)
+    ax.scatter(czernik['pmRA'], czernik['pmDE'], label='czernik20', s=3)
     ax.plot(np.mean(hsc2686['pmra']), np.mean(hsc2686['pmdec']), '*', 
             color='orange', label='Mean Proper Motion of hsc2686')
     ax.plot(np.mean(lynga3['pmra']), np.mean(lynga3['pmdec']), '*',
@@ -162,7 +162,10 @@ def GaiaDR3_PM_uncertainties():
                color='red', label='Lynga_3', s=3)
     ax.scatter(gaia_stars[filter_all_gaia]['pmra'], gaia_stars[filter_all_gaia]['pmdec'], 
                color='grey', label='All stars in DR3', s=0.2)
-
+    #ax.scatter(pleiades['pmRA'].astype(float), pleiades['pmDE'].astype(float), 
+               #color='purple', label='pleiades', s=3)
+    ax.scatter(czernik['pmRA'], czernik['pmDE'], 
+               label='czernik20', s=3)
     ax.plot(np.mean(hsc2686['pmra']), np.mean(hsc2686['pmdec']), 
             marker='*', color='orange', markersize=5, label='Mean PM of HSC_2686')
     ax.plot(np.mean(lynga3['pmra']), np.mean(lynga3['pmdec']), 
@@ -186,13 +189,15 @@ def GaiaDR3_PM_uncertainties():
 
 #Parallax vs Radial Velocity
 def GaiaDR3_Plx():
+    '''Parallax vs Radial Velocity'''
     fig, ax = plt.subplots()
 
     ax.scatter(gaia_stars['radial_velocity'], gaia_stars['parallax'], color='grey', 
                label='All stars in DR3', s=0.1)
     ax.scatter(hsc2686['radial_velocity'], hsc2686['parallax'], color='blue', label='HSC_2686', s=3)
     ax.scatter(lynga3['radial_velocity'], lynga3['parallax'], color='red', label='Lynga_3', s=3)
-    ax.scatter(pleiades['RV'], pleiades['Plx'], color='purple', label='pleiades', s=3)
+    #ax.scatter(pleiades['RV'].astype(float), pleiades['Plx'].astype(float), color='purple', label='pleiades', s=3)
+    ax.scatter(czernik['RV'], czernik['Plx'], label='czernik20', s=3)
     ax.plot(central_star['radial_velocity'], central_star['parallax'], marker='D', markersize='3', color='green', label='Central Star')
 
     ax.set_xlabel('Radial Velocity')
@@ -205,6 +210,6 @@ def GaiaDR3_Plx():
 
 #GaiaDR3_map()
 GaiaDR3_CMD()
-#GaiaDR3_PM()
+GaiaDR3_PM()
 #GaiaDR3_PM_uncertainties()
-#GaiaDR3_Plx()
+GaiaDR3_Plx()

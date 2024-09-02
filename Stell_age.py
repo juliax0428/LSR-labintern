@@ -4,6 +4,7 @@ import pandas as pd
 hsc2686 = pd.read_csv('/Users/xxz/LSR-labintern/HSC_2686.csv')
 lynga3 = pd.read_csv('/Users/xxz/LSR-labintern/Lynga3.csv')
 
+
 retrieval_type = 'ALL'          # Options are: 'EPOCH_PHOTOMETRY', 'MCMC_GSPPHOT', 'MCMC_MSC', 'XP_SAMPLED', 'XP_CONTINUOUS', 'RVS', 'ALL'
 data_structure = 'INDIVIDUAL'     # Options are: 'INDIVIDUAL' or 'RAW'
 data_release   = 'Gaia DR3'     # Options are: 'Gaia DR3' (default), 'Gaia DR2'
