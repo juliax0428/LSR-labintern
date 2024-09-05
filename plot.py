@@ -16,9 +16,9 @@ from PyAstronomy import pyasl
 # Read the data
 hsc2686 = pd.read_csv('/Users/xxz/Desktop/LSR-labintern/HSC_2686.csv')
 lynga3 = pd.read_csv('/Users/xxz/Desktop/LSR-labintern/Lynga3.csv')
-pleiades = pd.read_csv('/Users/xxz/Desktop/LSR-labintern/Pleiades.csv', sep=';', skiprows=2)
+#pleiades = pd.read_csv('/Users/xxz/Desktop/LSR-labintern/Pleiades.csv', sep=';', skiprows=2)
 gaia_stars = pd.read_csv('/Users/xxz/Desktop/LSR-labintern/all_GAIA_stars_in_area.csv')
-czernik = pd.read_csv('/Users/xxz/Desktop/LSR-labintern/czernik20_cleaned.csv', sep=',')
+#czernik = pd.read_csv('/Users/xxz/Desktop/LSR-labintern/czernik20_cleaned.csv', sep=',')
 
 #print('czernik', czernik)
 #print('czernik.keys', czernik.columns)
@@ -98,10 +98,11 @@ def GaiaDR3_map():
             color = 'red', label = 'Mean position of stars of Lynga 3')
     ax.plot(pos_PN_ra_deg, pos_PN_dec_deg, 'D', markersize=4, color = 'green', label = 'Central Star of PN')
 
-    ax.set_xlabel('Right Ascension (RA)')
-    ax.set_ylabel('Declination (DEC)')
-    ax.set_title('Gaia DR3 Map')
+    ax.set_xlabel('Right Ascension (RA)',fontsize=18)
+    ax.set_ylabel('Declination (DEC)',fontsize=18)
+    ax.set_title('Gaia DR3 Map',fontsize=20)
     ax.legend()
+    plt.savefig(fname='Gaia_map.png', dpi=300)
     plt.show()
 
 # Panel(b):
@@ -113,7 +114,7 @@ def GaiaDR3_CMD():
                color='grey', label='All stars in DR3', s=0.1)
     ax.scatter(hsc2686['bp_rp'], apparant_Gmag(hsc2686['phot_g_mean_mag'],distance(hsc2686['parallax'])), color='blue', label='HSC_2686', s=4)
     ax.scatter(lynga3['bp_rp'], apparant_Gmag(lynga3['phot_g_mean_mag'], distance(lynga3['parallax'])), color='red', label='Lynga_3', s=4)
-    ax.scatter(czernik['BP-RP'], apparant_Gmag(czernik['Gmag'], distance(czernik['Plx'])), label='czernik20', s=3)
+    #ax.scatter(czernik['BP-RP'], apparant_Gmag(czernik['Gmag'], distance(czernik['Plx'])), label='czernik20', s=3)
     #ax.scatter(pleiades['BP-RP'].astype(float), pleiades['Gmag'].astype(float), color='purple', label='pleiades', s=4)
     ax.plot(central_star['bp_rp'], apparant_Gmag(central_star['phot_g_mean_mag'],distance(central_star['parallax'])), marker='D', markersize='3', color='green', label='Central Star')
 
@@ -131,20 +132,20 @@ def GaiaDR3_PM():
     fig, ax = plt.subplots()
     ax.scatter(gaia_stars['pmra'], gaia_stars['pmdec'], color='grey', 
                label='All stars in DR3', s=0.1)
-    ax.scatter(hsc2686['pmra'], hsc2686['pmdec'], color='blue', label='HSC_2686', s=3)
-    ax.scatter(lynga3['pmra'], lynga3['pmdec'], color='red', label='Lynga_3', s=3)
+    ax.scatter(hsc2686['pmra'], hsc2686['pmdec'], color='blue', label='HSC_2686', s=4)
+    ax.scatter(lynga3['pmra'], lynga3['pmdec'], color='red', label='Lynga_3', s=4)
     #ax.scatter(pleiades['pmRA'].astype(float), pleiades['pmDE'].astype(float), color='purple', label='pleiades', s=3)
-    ax.scatter(czernik['pmRA'], czernik['pmDE'], label='czernik20', s=3)
-    ax.plot(np.mean(hsc2686['pmra']), np.mean(hsc2686['pmdec']), '*', 
-            color='orange', label='Mean Proper Motion of hsc2686')
-    ax.plot(np.mean(lynga3['pmra']), np.mean(lynga3['pmdec']), '*',
-            color = 'yellow', label = 'Mean Proper Motion of Lynga 3')
+    #ax.scatter(czernik['pmRA'], czernik['pmDE'], label='czernik20', s=3)
+    ax.plot(np.mean(hsc2686['pmra']), np.mean(hsc2686['pmdec']), '+',  label='Mean Proper Motion of hsc2686')
+    ax.plot(np.mean(lynga3['pmra']), np.mean(lynga3['pmdec']), '+', label = 'Mean Proper Motion of Lynga 3')
     ax.plot(central_star['pmra'], central_star['pmdec'], marker='D', markersize='3', color='green', label='Central Star')
-
-    ax.set_xlabel('Proper motion in RA')
-    ax.set_ylabel('Proper Motion in DE')
-    ax.set_title('Gaia DR3 Proper Motion')
+    #ax.set_xlim(-6,-4.4)
+    #ax.set_ylim(-4.4,-2.8)
+    ax.set_xlabel('Proper motion in RA', fontsize=14)
+    ax.set_ylabel('Proper Motion in DE', fontsize=14)
+    ax.set_title('Gaia DR3 Proper Motion', fontsize=16)
     ax.legend()
+    plt.savefig('Gaia_pm.png', dpi=1000)
     plt.show()
 
 #Panel (f):
@@ -152,39 +153,45 @@ def GaiaDR3_PM():
 def GaiaDR3_PM_uncertainties():
     fig, ax = plt.subplots()
 
+    # Apply filters
     filter_hsc2686 = (hsc2686['pmra_error'] < 2) & (hsc2686['pmdec_error'] < 2)
     filter_lynga3 = (lynga3['pmra_error'] < 2) & (lynga3['pmdec_error'] < 2)
     filter_all_gaia = (gaia_stars['pmra_error'] < 2) & (gaia_stars['pmdec_error'] < 2)
 
+    # Scatter plots
     ax.scatter(hsc2686[filter_hsc2686]['pmra'], hsc2686[filter_hsc2686]['pmdec'], 
-               color='blue', label='HSC_2686', s=3)
+               color='blue', label='HSC 2686', s=5)
     ax.scatter(lynga3[filter_lynga3]['pmra'], lynga3[filter_lynga3]['pmdec'], 
-               color='red', label='Lynga_3', s=3)
+               color='red', label='Lynga 3', s=5)
     ax.scatter(gaia_stars[filter_all_gaia]['pmra'], gaia_stars[filter_all_gaia]['pmdec'], 
-               color='grey', label='All stars in DR3', s=0.2)
-    #ax.scatter(pleiades['pmRA'].astype(float), pleiades['pmDE'].astype(float), 
-               #color='purple', label='pleiades', s=3)
-    ax.scatter(czernik['pmRA'], czernik['pmDE'], 
-               label='czernik20', s=3)
-    ax.plot(np.mean(hsc2686['pmra']), np.mean(hsc2686['pmdec']), 
-            marker='*', color='orange', markersize=5, label='Mean PM of HSC_2686')
-    ax.plot(np.mean(lynga3['pmra']), np.mean(lynga3['pmdec']), 
-            marker='*', color='yellow', markersize=5, label='Mean PM of Lynga 3')
+               color='grey', label='All stars in DR3', s=0.5)
     
+    # Error bars
     ax.errorbar(hsc2686[filter_hsc2686]['pmra'], hsc2686[filter_hsc2686]['pmdec'],
-                xerr=np.abs(hsc2686['pmra_error']/hsc2686['pmra']), 
-                yerr=np.abs(hsc2686['pmdec_error']/hsc2686['pmdec']), 
-                fmt='o', color='blue', capsize=3)
+                xerr=abs(hsc2686[filter_hsc2686]['pmra_error']), 
+                yerr=abs(hsc2686[filter_hsc2686]['pmdec_error']), 
+                fmt='o', color='blue', capsize=2, elinewidth=0.3, markersize=2)
     ax.errorbar(lynga3[filter_lynga3]['pmra'], lynga3[filter_lynga3]['pmdec'],
-                xerr=np.abs(lynga3['pmra_error']/lynga3['pmra']), 
-                yerr=np.abs(lynga3['pmdec_error']/lynga3['pmdec']), 
-                fmt='o', color='red', capsize=3)
-    ax.plot(central_star['pmra'], central_star['pmdec'], marker='D', markersize='8',color='green', label='Central Star')
-
-    ax.set_xlabel('Proper motion in RA (mas/yr)')
-    ax.set_ylabel('Proper Motion in DEC (mas/yr)')
-    ax.set_title('Gaia DR3 Proper Motions with Uncertainty')
+                xerr=abs(lynga3[filter_lynga3]['pmra_error']), 
+                yerr=abs(lynga3[filter_lynga3]['pmdec_error']), 
+                fmt='o', color='red', capsize=2, elinewidth=0.3, markersize=2)
+    
+    ax.plot(central_star['pmra'], central_star['pmdec'], marker='D', markersize=8,
+            color='green', label='Central Star')
+    ax.plot(np.mean(hsc2686['pmra']), np.mean(hsc2686['pmdec']), 
+            marker='+', color='red', markersize=20, label='Mean PM of HSC 2686')
+    ax.plot(np.mean(lynga3['pmra']), np.mean(lynga3['pmdec']), 
+            marker='+', color='blue', markersize=20, label='Mean PM of Lynga 3')
+    # Dynamic limits with padding
+    ax.set_xlim(hsc2686['pmra'].min()-0.2, hsc2686['pmra'].max()+0.4)
+    ax.set_ylim(hsc2686['pmdec'].min()-0.8, hsc2686['pmdec'].max()+0.5)
+    
+    # Labels and Title
+    ax.set_xlabel('Proper motion in RA (mas/yr)', fontsize=14)
+    ax.set_ylabel('Proper Motion in DEC (mas/yr)', fontsize=14)
+    ax.set_title('Gaia DR3 Proper Motions with Uncertainty', fontsize=16)
     ax.legend()
+    plt.savefig(fname=f'Gaia_pm_uncert.png', dpi=300)
     plt.show()
 
 #Parallax vs Radial Velocity
@@ -194,22 +201,22 @@ def GaiaDR3_Plx():
 
     ax.scatter(gaia_stars['radial_velocity'], gaia_stars['parallax'], color='grey', 
                label='All stars in DR3', s=0.1)
-    ax.scatter(hsc2686['radial_velocity'], hsc2686['parallax'], color='blue', label='HSC_2686', s=3)
-    ax.scatter(lynga3['radial_velocity'], lynga3['parallax'], color='red', label='Lynga_3', s=3)
-    #ax.scatter(pleiades['RV'].astype(float), pleiades['Plx'].astype(float), color='purple', label='pleiades', s=3)
-    ax.scatter(czernik['RV'], czernik['Plx'], label='czernik20', s=3)
-    ax.plot(central_star['radial_velocity'], central_star['parallax'], marker='D', markersize='3', color='green', label='Central Star')
-
-    ax.set_xlabel('Radial Velocity')
-    ax.set_ylabel('Parallax')
-    ax.set_title('Gaia DR3 Parallax against Radial Velocity')
+    ax.scatter(hsc2686['radial_velocity'], hsc2686['parallax'], color='blue', label='HSC_2686', s=10)
+    ax.scatter(lynga3['radial_velocity'], lynga3['parallax'], color='red', label='Lynga_3', s=10)
+    ax.plot(central_star['radial_velocity'], central_star['parallax'], marker='D', markersize='8', color='green', label='Central Star')
+    ax.set_xlim(-70,30)
+    ax.set_ylim(0,0.6)
+    ax.set_xlabel('Radial Velocity', fontsize=14)
+    ax.set_ylabel('Parallax', fontsize=14)
+    ax.set_title('Gaia DR3 Parallax against Radial Velocity', fontsize=16)
     ax.legend()
+    plt.savefig(fname='plx_rv.png', dpi=300)
     plt.show()
 
 
 
-#GaiaDR3_map()
-GaiaDR3_CMD()
-GaiaDR3_PM()
+GaiaDR3_map()
+#GaiaDR3_CMD()
+#GaiaDR3_PM()
 #GaiaDR3_PM_uncertainties()
-GaiaDR3_Plx()
+#GaiaDR3_Plx()

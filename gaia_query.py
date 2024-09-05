@@ -82,18 +82,16 @@ def createHSCTable(clusters, members):
 
     cluster_data_hsc = []
     cluster_data_lynga = []
-    cluster_data_czernik=[]
     for cluster in clusters:
         if cluster['Name'] =='HSC_2686':
             print('found cluster. name = ',cluster['Name'])
             cluster_data_hsc.append(cluster)
+            print(cluster_data_hsc)
         elif cluster['Name'] =='Lynga_3':
             print('found cluster. name = ',cluster['Name'])
             cluster_data_lynga.append(cluster)
-        elif cluster['Name'] =='Czernik_20':
-            print('found cluster. name = ',cluster['Name'])
-            cluster_data_czernik.append(cluster)
-    
+            print(cluster_data_lynga)
+    STOP
     nStars = 0
     nStarsWithParams = 0
     member_data_hsc =[]
