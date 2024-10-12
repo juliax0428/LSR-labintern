@@ -330,5 +330,5 @@ def GaiaDR3_Plx():
 #CMD_iso()
 #GaiaDR3_PM()
 #GaiaDR3_Plx()
-#GaiaDR3_PM_uncertainties()
+GaiaDR3_PM_uncertainties()
 save_csvfiles()
